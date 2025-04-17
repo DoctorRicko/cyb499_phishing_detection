@@ -2,7 +2,7 @@ import os
 from transformers import (
     AutoModelForSequenceClassification,
     Trainer,
-    TrainingArguments
+    TrainingArguments,
 )
 from peft import LoraConfig, get_peft_model
 from data_processing import prepare_datasets  # Import your data preparation function
@@ -26,7 +26,6 @@ def compute_metrics(pred):
     return {"eval_f1": f1, "eval_accuracy": acc}
 
 
-
 def train(model_name="roberta-base", output_dir="model/lora_test"):
     """
     Trains a sequence classification model using LoRA.
@@ -43,7 +42,6 @@ def train(model_name="roberta-base", output_dir="model/lora_test"):
         raise ValueError(
             "prepare_datasets() must return a dictionary with 'train' and 'test' keys, containing Dataset objects."
         )
-
 
     print(f"\nFinal dataset sizes:")
     print(f"Training samples: {len(dataset['train'])}")
@@ -73,8 +71,8 @@ def train(model_name="roberta-base", output_dir="model/lora_test"):
         per_device_train_batch_size=4,
         num_train_epochs=3,
         learning_rate=2e-5,
-        evaluation_strategy="epoch",
-        save_strategy="epoch",
+        evaluation_strategy="epoch",  # Corrected argument name
+        save_strategy="epoch",  # Corrected argument name
         logging_dir="./logs",
         fp16=torch.cuda.is_available(),
         load_best_model_at_end=True,
@@ -100,7 +98,6 @@ def train(model_name="roberta-base", output_dir="model/lora_test"):
     print(f"\nTraining complete! Model saved to {output_dir}")
 
 
-
 if __name__ == "__main__":
     import argparse
 
@@ -110,3 +107,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     train(args.model_name, args.output_dir)
+
