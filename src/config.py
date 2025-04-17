@@ -32,6 +32,7 @@ TRAINING_ARGS = {
 # Data Processing (Enhanced)
 MAX_LENGTH = 384  # Increased from 256 (matches your earlier analysis)
 TEST_SIZE = 0.2
+EXTRA_KEYWORDS = ['login', 'security', 'alert', 'suspend']
 KEYWORDS = ['click', 'verify', 'account', *EXTRA_KEYWORDS]  # Combined list
 
 # Enron Config (Optional - Only if using maildir)
