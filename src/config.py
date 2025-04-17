@@ -23,7 +23,7 @@ TRAINING_ARGS = {
     "learning_rate": 2e-5,
     "fp16": True,  # Enable mixed-precision
     "logging_dir": str(PROJECT_DIR / "logs"),
-    "evaluation_strategy": "epoch",
+    "eval_strategy": "epoch",
     "save_strategy": "epoch",
     "load_best_model_at_end": True,  # Added
     "metric_for_best_model": "f1"  # Added
