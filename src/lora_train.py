@@ -17,7 +17,7 @@ def setup_lora(model):
         target_modules=["q_proj", "v_proj"],
         lora_dropout=0.05,
         bias="none",
-        task_type="SEQ_CLASSIFICATION"
+        task_type="SEQ_CLS"  # Changed from "SEQ_CLASSIFICATION" to "SEQ_CLS"
     )
     return get_peft_model(model, config)
 
