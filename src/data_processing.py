@@ -19,8 +19,20 @@ def load_enron_emails():
     return pd.DataFrame(emails)
 
 def load_phishing_data():
+    """Load phishing emails from your specific CSV structure"""
     df = pd.read_csv(DATA_DIR / "extracted/phishing/enron.csv")
-    return df[["text"]].assign(label=1)
+    
+    # Combine subject and body with clear separation
+    texts = df['subject'].fillna('') + "\n\n" + df['body'].fillna('')
+    
+    # Only use samples marked as phishing (label=1)
+    if 'label' in df.columns:
+        return pd.DataFrame({
+            'text': texts[df['label'] == 1],  # Filter for phishing only
+            'label': 1
+        })
+    else:
+        return pd.DataFrame({'text': texts, 'label': 1})
 
 def prepare_datasets():
     legit = load_enron_emails()
