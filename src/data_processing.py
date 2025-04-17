@@ -1,51 +1,48 @@
 import pandas as pd
+from pathlib import Path
 from datasets import Dataset
 from transformers import AutoTokenizer
-from pathlib import Path
 
-# Use absolute paths
 DATA_DIR = Path(__file__).parent.parent / "data"
 MAX_LENGTH = 256
 
-def load_enron_emails():
-    emails = []
-    enron_path = DATA_DIR / "extracted/enron/maildir"
-    for email_file in enron_path.glob("**/*.txt"):
-        with open(email_file, "r", encoding="latin1") as f:
-            emails.append({
-                "text": f.read(),
-                "label": 0
-            })
-    return pd.DataFrame(emails)
-
-def load_phishing_data():
-    """Load phishing emails from your specific CSV structure"""
+def load_data():
+    """Load all data from the single CSV file using labels"""
     df = pd.read_csv(DATA_DIR / "extracted/phishing/enron.csv")
     
-    # Combine subject and body with clear separation
-    texts = df['subject'].fillna('') + "\n\n" + df['body'].fillna('')
+    # Separate legitimate (0) and phishing (1) emails
+    legit = df[df['label'] == 0]
+    phish = df[df['label'] == 1]
     
-    # Only use samples marked as phishing (label=1)
-    if 'label' in df.columns:
-        return pd.DataFrame({
-            'text': texts[df['label'] == 1],  # Filter for phishing only
-            'label': 1
-        })
-    else:
-        return pd.DataFrame({'text': texts, 'label': 1})
+    # Combine subject and body for both types
+    legit_texts = legit['subject'].fillna('') + "\n\n" + legit['body'].fillna('')
+    phish_texts = phish['subject'].fillna('') + "\n\n" + phish['body'].fillna('')
+    
+    # Create labeled DataFrames
+    legit_df = pd.DataFrame({'text': legit_texts, 'label': 0})
+    phish_df = pd.DataFrame({'text': phish_texts, 'label': 1})
+    
+    return legit_df, phish_df
 
 def prepare_datasets():
-    legit = load_enron_emails()
-    phish = load_phishing_data()
+    """Prepare dataset using only the CSV data"""
+    legit, phish = load_data()
+    
+    print(f"Found {len(legit)} legitimate and {len(phish)} phishing emails")
     
     # Balance classes
-    min_samples = min(len(legit), len(phish))
+    min_count = min(len(legit), len(phish))
     combined = pd.concat([
-        legit.sample(min_samples),
-        phish.sample(min_samples)
-    ])
+        legit.sample(min_count, random_state=42),
+        phish.sample(min_count, random_state=42)
+    ]).sample(frac=1, random_state=42)
     
-    # Tokenize
+    print("\nSample legitimate:")
+    print(combined[combined['label']==0]['text'].iloc[0][:200] + "...")
+    print("\nSample phishing:")
+    print(combined[combined['label']==1]['text'].iloc[0][:200] + "...")
+    
+    # Tokenization
     tokenizer = AutoTokenizer.from_pretrained("roberta-base")
     dataset = Dataset.from_pandas(combined)
     
