@@ -39,29 +39,29 @@ def load_enron_emails():
 
     return pd.DataFrame(emails).sample(frac=1)
 
-def prepare_datasets(model_name): # Accept model_name as an argument
-    """Prepare dataset with your specific structure"""
-    # Load data
+def prepare_datasets():
+    """Returns tokenized datasets with train/test split"""
+    # Load and balance data
     legit_df = load_enron_emails()
     phish_df = load_phishing_data()
-
-    # Verify counts
-    print(f"Loaded {len(legit_df)} legitimate emails")
-    print(f"Loaded {len(phish_df)} phishing emails")
-
-    # Combine and shuffle
-    combined = pd.concat([legit_df.assign(label=0), phish_df.assign(label=1)]).sample(frac=1).reset_index(drop=True)
-
+    
+    # Balance classes
+    min_samples = min(len(legit_df), len(phish_df))
+    combined = pd.concat([
+        legit_df.sample(min_samples),
+        phish_df.sample(min_samples)
+    ])
+    
     # Tokenization
-    tokenizer = AutoTokenizer.from_pretrained(model_name) # Use the passed model_name
+    tokenizer = AutoTokenizer.from_pretrained("roberta-base")
     dataset = Dataset.from_pandas(combined)
-
+    
     return dataset.map(
         lambda x: tokenizer(
             x["text"],
             truncation=True,
             padding="max_length",
-            max_length=MAX_LENGTH
+            max_length=256
         ),
         batched=True
     ).train_test_split(test_size=0.2)

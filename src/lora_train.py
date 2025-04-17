@@ -1,12 +1,39 @@
+from data_processing import prepare_datasets
 from transformers import (
     AutoModelForSequenceClassification,
     Trainer,
     TrainingArguments
 )
 from peft import LoraConfig, get_peft_model
-from .data_processing import prepare_datasets
 import torch
 import os
+
+def prepare_datasets():
+    """Returns tokenized datasets with train/test split"""
+    # Load and balance data
+    legit_df = load_enron_emails()
+    phish_df = load_phishing_data()
+    
+    # Balance classes
+    min_samples = min(len(legit_df), len(phish_df))
+    combined = pd.concat([
+        legit_df.sample(min_samples),
+        phish_df.sample(min_samples)
+    ])
+    
+    # Tokenization
+    tokenizer = AutoTokenizer.from_pretrained("roberta-base")
+    dataset = Dataset.from_pandas(combined)
+    
+    return dataset.map(
+        lambda x: tokenizer(
+            x["text"],
+            truncation=True,
+            padding="max_length",
+            max_length=256
+        ),
+        batched=True
+    ).train_test_split(test_size=0.2)
 
 def train():
     # Configuration
