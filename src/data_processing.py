@@ -2,7 +2,7 @@ import pandas as pd
 from pathlib import Path
 from datasets import Dataset
 from transformers import AutoTokenizer
-from src.config import DATA_DIR, MAX_LENGTH, MODEL_NAME  # Import from config
+from .config import DATA_DIR, MAX_LENGTH, MODEL_NAME  # Import from config
 
 def load_enron_emails():
     """Load legitimate emails (label=0)"""
