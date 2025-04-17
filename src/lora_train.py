@@ -17,6 +17,9 @@ def train(model_name="roberta-base", output_dir="model/lora_roberta_v1"):
     # Load data
     dataset = prepare_datasets()
     print(f"Loaded {len(dataset['train'])} training samples")
+    # Add to prepare_datasets():
+    print("First legitimate sample:", legit_df.iloc[0]['text'][:100])
+    print("First phishing sample:", phish_df.iloc[0]['text'][:100])
     
     # Model setup
     model = AutoModelForSequenceClassification.from_pretrained(
@@ -31,7 +34,7 @@ def train(model_name="roberta-base", output_dir="model/lora_roberta_v1"):
         target_modules=["query", "value", "key"],
         lora_dropout=0.05,
         bias="none",
-        task_type="SEQ_CLASSIFICATION"
+        task_type="SEQ_CLS"
     )
     model = get_peft_model(model, peft_config)
     
