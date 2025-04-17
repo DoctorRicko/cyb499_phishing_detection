@@ -1,4 +1,4 @@
-from .data_processing import prepare_datasets
+from data_processing import prepare_datasets
 from transformers import (
     AutoModelForSequenceClassification,
     Trainer,
