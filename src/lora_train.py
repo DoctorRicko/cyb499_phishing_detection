@@ -10,14 +10,15 @@ import torch
 import argparse
 
 def setup_lora(model):
-    """Configure LoRA adapters"""
+    """Configure LoRA adapters for RoBERTa"""
     config = LoraConfig(
         r=16,
         lora_alpha=32,
-        target_modules=["q_proj", "v_proj"],
+        # Target the query and value projection layers in the self-attention modules
+        target_modules=["query", "value"],
         lora_dropout=0.05,
         bias="none",
-        task_type="SEQ_CLS"  # Changed from "SEQ_CLASSIFICATION" to "SEQ_CLS"
+        task_type="SEQ_CLS"
     )
     return get_peft_model(model, config)
 
