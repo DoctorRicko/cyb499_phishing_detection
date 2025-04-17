@@ -50,6 +50,11 @@ def train():
     training_args = TRAINING_ARGS.copy()
     training_args["output_dir"] = args.output_dir # Override output_dir
 
+    # Print the training arguments
+    print("Training Arguments:")
+    for key, value in training_args.items():
+        print(f"  {key}: {value} ({type(value)})")  # Print key, value, and type
+
     # Train
     trainer = Trainer(
         model=model,
