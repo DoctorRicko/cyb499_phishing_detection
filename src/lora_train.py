@@ -48,22 +48,27 @@ def train():
 
     # Create a copy of TRAINING_ARGS to avoid modifying the original config
     training_args = TRAINING_ARGS.copy()
-    training_args["output_dir"] = args.output_dir # Override output_dir
-
-    # Print the training arguments
-    print("Training Arguments:")
-    for key, value in training_args.items():
-        print(f"  {key}: {value} ({type(value)})")  # Print key, value, and type
+    output_dir = args.output_dir # Store this for the TrainingArguments
 
     # Train
     trainer = Trainer(
         model=model,
-        args=TrainingArguments(**training_args), # Use the modified dictionary
+        args=TrainingArguments(
+            output_dir=output_dir,
+            per_device_train_batch_size=training_args["per_device_train_batch_size"],
+            gradient_accumulation_steps=training_args["gradient_accumulation_steps"],
+            num_train_epochs=training_args["num_train_epochs"],
+            learning_rate=training_args["learning_rate"],
+            fp16=training_args["fp16"],
+            logging_dir=training_args["logging_dir"],
+            evaluation_strategy=training_args["evaluation_strategy"],
+            save_strategy=training_args["save_strategy"],
+        ),
         train_dataset=tokenized["train"],
         eval_dataset=tokenized["test"]
     )
     trainer.train()
-    trainer.save_model(args.output_dir)
+    trainer.save_model(output_dir)
 
 if __name__ == "__main__":
     train()
