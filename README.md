@@ -1,4 +1,4 @@
-For reason's I have not determined yet, you abosultely need to run this in a virtual environment.
+For reasons I have not determined yet, you abosultely need to run this in a virtual environment.
 
 Clone the repo (git clone https://github.com/DoctorRicko/cyb499_phishing_detection.git), cd to it, the run
 
