@@ -1,77 +1,113 @@
-import os
-from transformers import (
-    AutoModelForSequenceClassification,
-    Trainer,
-    TrainingArguments
+import json
+import numpy as np
+import pandas as pd
+from sklearn.metrics import (
+    classification_report,
+    confusion_matrix,
+    ConfusionMatrixDisplay,
+    f1_score,  # Import f1_score
+    accuracy_score
 )
-from peft import LoraConfig, get_peft_model
-from data_processing import prepare_datasets
+from transformers import pipeline, AutoModelForSequenceClassification, AutoTokenizer  # Import AutoModelForSequenceClassification and AutoTokenizer
+from pathlib import Path
+#from .config import DATA_DIR  # Remove this line
+import matplotlib.pyplot as plt
 import torch
+import argparse # Import argparse
 
-def train(model_name="roberta-base", output_dir="model/lora_test"):
-    # Create output directory
-    os.makedirs(output_dir, exist_ok=True)
-    
-    # Load and verify data
-    dataset = prepare_datasets()
-    print(f"\nFinal dataset sizes:")
-    print(f"Training samples: {len(dataset['train'])}")
-    print(f"Validation samples: {len(dataset['test'])}")
-    
-    # Model setup
+
+def evaluate(model_path, test_file, results_dir):  # Add arguments
+    """
+    Evaluates a fine-tuned model for text classification.
+
+    Args:
+        model_path (str): Path to the directory containing the trained model.
+        test_file (str): Path to the test data CSV file.
+        results_dir (str): Path to the directory to save the evaluation results.
+    """
+    # Create results directory
+    Path(results_dir).mkdir(parents=True, exist_ok=True)
+
+    # Load the tokenizer
+    tokenizer = AutoTokenizer.from_pretrained(model_path)
+
+    # Load the fine-tuned model
     model = AutoModelForSequenceClassification.from_pretrained(
-        model_name,
-        num_labels=2,
+        model_path,
+        num_labels=2,  # Assuming binary classification
         torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32
     )
-    
-    # LoRA configuration
-    peft_config = LoraConfig(
-        r=16,
-        lora_alpha=32,
-        target_modules=["query", "value", "key"],
-        lora_dropout=0.05,
-        bias="none",
-        task_type="SEQ_CLS"
+    model.to("cuda" if torch.cuda.is_available() else "cpu") # Move model to device
+
+    # Load test data
+    test_data = pd.read_csv(test_file)
+    if "text" not in test_data.columns or "label" not in test_data.columns:
+        raise ValueError("Test data must contain 'text' and 'label' columns")
+
+    # Tokenize the test data
+    inputs = tokenizer(
+        test_data["text"].tolist(),
+        padding="max_length",
+        truncation=True,
+        max_length=256,  # Or your desired max length
+        return_tensors="pt",
     )
-    model = get_peft_model(model, peft_config)
-    model.print_trainable_parameters()
-    
-    training_args = TrainingArguments(
-        output_dir=output_dir,
-        per_device_train_batch_size=4,
-        num_train_epochs=3,
-        learning_rate=2e-5,
-        eval_strategy="epoch",
-        save_strategy="epoch",
-        logging_dir="./logs",
-        fp16=torch.cuda.is_available(),
-        load_best_model_at_end=True,
-        metric_for_best_model="f1",
-        greater_is_better=True,
-        report_to="tensorboard",
-        logging_steps=50
-    )
-    
-    # Trainer
-    trainer = Trainer(
-        model=model,
-        args=training_args,
-        train_dataset=dataset["train"],
-        eval_dataset=dataset["test"]
-    )
-    
-    # Train
-    print("\nStarting training...")
-    trainer.train()
-    trainer.save_model(output_dir)
-    print(f"\nTraining complete! Model saved to {output_dir}")
+    inputs = inputs.to("cuda" if torch.cuda.is_available() else "cpu")  # Move inputs to device
+
+    # Run predictions
+    model.eval()  # Set the model to evaluation mode
+    with torch.no_grad():  # Disable gradient calculation
+        outputs = model(**inputs)
+        logits = outputs.logits
+        predictions = torch.argmax(logits, dim=-1).cpu().numpy()
+    y_pred = predictions
+    y_true = test_data["label"].values
+
+    # Generate metrics
+    report = classification_report(y_true, y_pred, output_dict=True)
+    with open(Path(results_dir) / "metrics.json", "w") as f:
+        json.dump(report, f)
+    print(f"Metrics saved to {Path(results_dir) / 'metrics.json'}")
+
+    # Calculate and save F1 score and accuracy
+    f1 = f1_score(y_true, y_pred)
+    acc = accuracy_score(y_true, y_pred)
+    print(f"F1 Score: {f1}")
+    print(f"Accuracy: {acc}")
+    with open(Path(results_dir) / "f1_and_accuracy.json", "w") as f:
+        json.dump({"f1": f1, "accuracy": acc}, f)
+    print(f"F1 and Accuracy saved to {Path(results_dir) / 'f1_and_accuracy.json'}")
+
+    # Save confusion matrix
+    cm = confusion_matrix(y_true, y_pred)
+    disp = ConfusionMatrixDisplay(cm, display_labels=["Legitimate", "Phishing"])
+    disp.plot()
+    plt.savefig(Path(results_dir) / "confusion_matrix.png")
+    plt.close()
+    print(f"Confusion matrix saved to {Path(results_dir) / 'confusion_matrix.png'}")
+
+
 
 if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--model_name", default="roberta-base")
-    parser.add_argument("--output_dir", default="model/lora_test")
+    parser = argparse.ArgumentParser(description="Evaluate a text classification model")
+    parser.add_argument(
+        "--model_path",
+        type=str,
+        required=True,
+        help="Path to the trained model directory",
+    )
+    parser.add_argument(
+        "--test_file",
+        type=str,
+        default="data/processed/test.csv",
+        help="Path to the test data CSV file",
+    )
+    parser.add_argument(
+        "--results_dir",
+        type=str,
+        default="results",
+        help="Path to the directory to save the evaluation results",
+    )
     args = parser.parse_args()
-    
-    train(args.model_name, args.output_dir)
+
+    evaluate(args.model_path, args.test_file, args.results_dir)
