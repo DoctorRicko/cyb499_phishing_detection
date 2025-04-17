@@ -4,7 +4,7 @@ from transformers import (
     TrainingArguments
 )
 from peft import LoraConfig, get_peft_model
-from config import TRAINING_ARGS, MODEL_NAME
+from .config import TRAINING_ARGS, MODEL_NAME
 from .data_processing import load_and_prepare_data, tokenize_dataset
 import torch
 
