@@ -45,11 +45,12 @@ def train(model_name="roberta-base", output_dir="model/lora_test"):
         eval_strategy="epoch",
         save_strategy="epoch",
         logging_dir="./logs",
-        report_to="none",
         fp16=torch.cuda.is_available(),
         load_best_model_at_end=True,
         metric_for_best_model="f1",
-        greater_is_better=True
+        greater_is_better=True,
+        report_to="tensorboard",
+        logging_steps=50
     )
     
     # Trainer
