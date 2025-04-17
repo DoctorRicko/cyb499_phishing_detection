@@ -3,6 +3,7 @@ For reason's I have not determined yet, you abosultely need to run this in a vir
 Clone the repo (git clone https://github.com/DoctorRicko/cyb499_phishing_detection.git), cd to it, the run
 
 python -m venv phishdetect # may take a minute
+
 .\phishdetect\Scripts\activate
 
 This should make the virtual environment and activate it, you should see (phishdetect) at the beginning of your CLI prompt.
