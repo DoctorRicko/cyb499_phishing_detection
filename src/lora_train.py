@@ -9,6 +9,7 @@ from data_processing import prepare_datasets  # Import your data preparation fun
 import torch
 import argparse
 from sklearn.metrics import f1_score, accuracy_score
+from .config import TRAINING_ARGS  # Import the dictionary
 
 
 def compute_metrics(pred):
@@ -66,26 +67,14 @@ def train(model_name="roberta-base", output_dir="model/lora_test"):
     model = get_peft_model(model, peft_config)
     model.print_trainable_parameters()
 
-    training_args = TrainingArguments(
-        output_dir=output_dir,
-        per_device_train_batch_size=2,
-        num_train_epochs=3,
-        learning_rate=2e-5,
-        evaluation_strategy="epoch",  # Corrected argument name
-        save_strategy="epoch",  # Corrected argument name
-        logging_dir="./logs",
-        fp16=torch.cuda.is_available(),
-        load_best_model_at_end=True,
-        metric_for_best_model="eval_f1",  # Use eval_f1
-        greater_is_better=True,
-        report_to="tensorboard",
-        logging_steps=50,
-    )
+    # Use the TRAINING_ARGS from config.py, and update the output_dir
+    training_args = TRAINING_ARGS.copy()  # Create a copy to avoid modifying the original
+    training_args["output_dir"] = output_dir  # Override with the command-line argument
 
     # Trainer
     trainer = Trainer(
         model=model,
-        args=training_args,
+        args=TrainingArguments(**training_args),
         train_dataset=dataset["train"],
         eval_dataset=dataset["test"],
         compute_metrics=compute_metrics,  # Pass the compute_metrics function
@@ -107,4 +96,3 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     train(args.model_name, args.output_dir)
-
