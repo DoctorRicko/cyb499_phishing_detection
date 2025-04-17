@@ -9,7 +9,7 @@ from data_processing import prepare_datasets  # Import your data preparation fun
 import torch
 import argparse
 from sklearn.metrics import f1_score, accuracy_score
-from .config import TRAINING_ARGS  # Import the dictionary
+from config import TRAINING_ARGS  # Import the dictionary
 
 
 def compute_metrics(pred):
