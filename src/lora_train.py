@@ -5,7 +5,7 @@ from transformers import (
 )
 from peft import LoraConfig, get_peft_model
 from .config import TRAINING_ARGS, MODEL_NAME
-from .data_processing import load_and_prepare_data, tokenize_dataset
+from .data_processing import prepare_datasets  # Changed from load_and_prepare_data
 import torch
 
 def setup_lora(model):
@@ -21,9 +21,8 @@ def setup_lora(model):
     return get_peft_model(model, config)
 
 def train():
-    # Load data
-    df = load_and_prepare_data()
-    tokenized = tokenize_dataset(df)
+    # Load data - now using prepare_datasets() instead
+    tokenized = prepare_datasets()  # Returns already tokenized datasets
     
     # Initialize model
     model = AutoModelForSequenceClassification.from_pretrained(
