@@ -1,9 +1,14 @@
 from pathlib import Path
 
 # Paths
-PROJECT_DIR = Path(__file__).parent.parent
 DATA_DIR = PROJECT_DIR / "data"
-MODEL_DIR = PROJECT_DIR / "models"
+PROCESSED_DIR = DATA_DIR / "processed"
+EXTRACTED_DIR = DATA_DIR / "extracted"
+
+ENRON_CONFIG = {
+    "max_emails": 10000,  # Limit if needed
+    "allowed_folders": ["inbox", "sent"]  # Skip drafts, etc.
+}
 
 # Model
 MODEL_NAME = "meta-llama/Llama-2-7b-hf"
