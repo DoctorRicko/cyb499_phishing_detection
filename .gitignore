@@ -1,0 +1,29 @@
+# Data
+data/raw/
+data/processed/
+data/experiments/
+
+# Models
+models/pretrained/
+models/fine_tuned/
+models/exported/
+
+# Environment
+venv/
+.env
+
+# IDE
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Jupyter
+.ipynb_checkpoints/
+
+# System
+.DS_Store
+Thumbs.db
