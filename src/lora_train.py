@@ -68,7 +68,7 @@ def train(model_name="roberta-base", output_dir="model/lora_test"):
 
     training_args = TrainingArguments(
         output_dir=output_dir,
-        per_device_train_batch_size=4,
+        per_device_train_batch_size=2,
         num_train_epochs=3,
         learning_rate=2e-5,
         evaluation_strategy="epoch",  # Corrected argument name
