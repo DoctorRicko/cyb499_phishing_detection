@@ -37,16 +37,19 @@ def train(model_name="roberta-base", output_dir="model/lora_test"):
     model = get_peft_model(model, peft_config)
     model.print_trainable_parameters()
     
-    # Training arguments
     training_args = TrainingArguments(
         output_dir=output_dir,
         per_device_train_batch_size=4,
         num_train_epochs=3,
         learning_rate=2e-5,
-        evaluation_strategy="epoch",
+        eval_strategy="epoch",
         save_strategy="epoch",
         logging_dir="./logs",
-        report_to="none"
+        report_to="none",
+        fp16=torch.cuda.is_available(),
+        load_best_model_at_end=True,
+        metric_for_best_model="f1",
+        greater_is_better=True
     )
     
     # Trainer
