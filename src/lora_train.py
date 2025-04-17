@@ -4,10 +4,11 @@ from transformers import (
     TrainingArguments
 )
 from peft import LoraConfig, get_peft_model
-from .config import TRAINING_ARGS # We might not need MODEL_NAME from config anymore
+from .config import TRAINING_ARGS # Import the dictionary, but we'll modify it
 from .data_processing import prepare_datasets
 import torch
 import argparse
+import os
 
 def setup_lora(model):
     """Configure LoRA adapters for RoBERTa"""
@@ -36,7 +37,7 @@ def train():
 
     # Initialize model
     model = AutoModelForSequenceClassification.from_pretrained(
-        args.model_name, # Use the model_name from the argument
+        args.model_name,
         num_labels=2,
         torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32
     )
@@ -45,15 +46,19 @@ def train():
     model = setup_lora(model)
     model.print_trainable_parameters()
 
+    # Create a copy of TRAINING_ARGS to avoid modifying the original config
+    training_args = TRAINING_ARGS.copy()
+    training_args["output_dir"] = args.output_dir # Override output_dir
+
     # Train
     trainer = Trainer(
         model=model,
-        args=TrainingArguments(**TRAINING_ARGS),
+        args=TrainingArguments(**training_args), # Use the modified dictionary
         train_dataset=tokenized["train"],
         eval_dataset=tokenized["test"]
     )
     trainer.train()
-    trainer.save_model(args.output_dir) # Use the output directory from the argument
+    trainer.save_model(args.output_dir)
 
 if __name__ == "__main__":
     train()
