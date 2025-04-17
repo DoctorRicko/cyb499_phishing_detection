@@ -1,38 +1,50 @@
-# src/lora_train.py
-from transformers import TrainingArguments, Trainer
-from .config import TRAINING_ARGS
-from .data_processing import prepare_data
-from .lora_utils import prepare_lora_model
+from transformers import (
+    AutoModelForSequenceClassification,
+    Trainer,
+    TrainingArguments
+)
+from peft import LoraConfig, get_peft_model
+from config import TRAINING_ARGS, MODEL_NAME
+from .data_processing import load_and_prepare_data, tokenize_dataset
 import torch
 
-def train_lora():
-    # Initialize
-    model = prepare_lora_model(MODEL_NAME)
-    data = prepare_data()
+def setup_lora(model):
+    """Configure LoRA adapters"""
+    config = LoraConfig(
+        r=16,
+        lora_alpha=32,
+        target_modules=["q_proj", "v_proj"],
+        lora_dropout=0.05,
+        bias="none",
+        task_type="SEQ_CLASSIFICATION"
+    )
+    return get_peft_model(model, config)
+
+def train():
+    # Load data
+    df = load_and_prepare_data()
+    tokenized = tokenize_dataset(df)
     
-    # Training arguments (override some defaults)
-    args = TrainingArguments(
-        **TRAINING_ARGS,
-        report_to="none",          # Change to "wandb" if using
-        save_strategy="epoch",
-        load_best_model_at_end=True
+    # Initialize model
+    model = AutoModelForSequenceClassification.from_pretrained(
+        MODEL_NAME,
+        num_labels=2,
+        torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32
     )
     
-    # Trainer setup
+    # Apply LoRA
+    model = setup_lora(model)
+    model.print_trainable_parameters()
+    
+    # Train
     trainer = Trainer(
         model=model,
-        args=args,
-        train_dataset=data["train"],
-        eval_dataset=data["test"],
-        compute_metrics=compute_metrics  # From evaluate.py
+        args=TrainingArguments(**TRAINING_ARGS),
+        train_dataset=tokenized["train"],
+        eval_dataset=tokenized["test"]
     )
-    
-    # Start training
-    print("Trainable parameters:", sum(p.numel() for p in model.parameters() if p.requires_grad))
     trainer.train()
-    
-    # Save only adapters (small files)
-    model.save_pretrained(str(MODEL_DIR / "lora_adapters"))
+    trainer.save_model()
 
 if __name__ == "__main__":
-    train_lora()
+    train()
