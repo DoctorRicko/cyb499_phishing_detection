@@ -45,3 +45,14 @@ IMPORTANT: Training is a heavy load on your computer and will take *hours* to co
 ```
 python src/lora_train.py --model_name roberta-base --output_dir model/lora_test
 ```
+# Evaluating the Model
+Now that you have the model, all that's left is simply to put it to the test. This doesn't take as long since
+I reduced the amount of files it needs to go over, if you change the load you could overload your CPU and crash
+the program, maybe even your computer
+
+```
+python .\src\evaluate.py --model_path .\model\lora_test\ --test_file .\data\test.csv --results_dir .\results
+```
+
+I believe that's everything, you can change evaulation.py to give you different metrics if you'd like, but
+you'd probably have to modify the rest of the code as well.
