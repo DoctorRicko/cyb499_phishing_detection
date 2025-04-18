@@ -1,7 +1,18 @@
+# Core Requirements
 torch>=2.0.0
 transformers>=4.30.0
 datasets>=2.12.0
 peft>=0.4.0
+accelerate>=0.20.0
+
+# Data Processing
 pandas>=1.5.0
 scikit-learn>=1.2.0
-accelerate>=0.20.0
+
+# Optional (for notebooks/tracking)
+jupyter>=1.0.0
+tensorboard>=2.12.0
+matplotlib>=3.7.0
+
+# Project-Specific
+bitsandbytes>=0.40.0  # For 4-bit quantization (optional)

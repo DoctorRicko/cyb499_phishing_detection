@@ -1,3 +1,4 @@
+from peft import PeftModel, PeftConfig
 import json
 import numpy as np
 import pandas as pd
@@ -5,40 +6,34 @@ from sklearn.metrics import (
     classification_report,
     confusion_matrix,
     ConfusionMatrixDisplay,
-    f1_score,  # Import f1_score
+    f1_score,  
     accuracy_score
 )
-from transformers import pipeline, AutoModelForSequenceClassification, AutoTokenizer  # Import AutoModelForSequenceClassification and AutoTokenizer
+from transformers import pipeline, AutoModelForSequenceClassification, AutoTokenizer 
 from pathlib import Path
-#from .config import DATA_DIR  # Remove this line
 import matplotlib.pyplot as plt
 import torch
-import argparse # Import argparse
+import argparse 
 
 
-def evaluate(model_path, test_file, results_dir):  # Add arguments
-    """
-    Evaluates a fine-tuned model for text classification.
-
-    Args:
-        model_path (str): Path to the directory containing the trained model.
-        test_file (str): Path to the test data CSV file.
-        results_dir (str): Path to the directory to save the evaluation results.
-    """
+def evaluate(model_path, test_file, results_dir):
     # Create results directory
     Path(results_dir).mkdir(parents=True, exist_ok=True)
 
-    # Load the tokenizer
-    tokenizer = AutoTokenizer.from_pretrained(model_path)
-
-    # Load the fine-tuned model
-    model = AutoModelForSequenceClassification.from_pretrained(
-        model_path,
-        num_labels=2,  # Assuming binary classification
+    # Load tokenizer from BASE MODEL (not LoRA directory)
+    tokenizer = AutoTokenizer.from_pretrained("roberta-base")  # Your base model name
+    
+    # Load base model
+    base_model = AutoModelForSequenceClassification.from_pretrained(
+        "roberta-base",
+        num_labels=2,
         torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32
     )
-    model.to("cuda" if torch.cuda.is_available() else "cpu") # Move model to device
-
+    
+    # Load LoRA adapter
+    model = PeftModel.from_pretrained(base_model, model_path)
+    model = model.to("cuda" if torch.cuda.is_available() else "cpu")
+    
     # Load test data
     test_data = pd.read_csv(test_file)
     if "text" not in test_data.columns or "label" not in test_data.columns:
