@@ -39,17 +39,19 @@ def evaluate(model_path, test_file, results_dir):
     if "text" not in test_data.columns or "label" not in test_data.columns:
         raise ValueError("Test data must contain 'text' and 'label' columns")
 
-    # Tokenize the test data
+    if "body" not in test_data.columns or "label" not in test_data.columns:
+        raise ValueError("Test data must contain 'body' and 'label' columns")
+
     inputs = tokenizer(
-        test_data["text"].tolist(),
+        test_data["body"].tolist(),  # Changed from "text" to "body"
         padding="max_length",
         truncation=True,
-        max_length=256,  # Or your desired max length
+        max_length=256,
         return_tensors="pt",
     )
+
     inputs = inputs.to("cuda" if torch.cuda.is_available() else "cpu")  # Move inputs to device
 
-    # Run predictions
     model.eval()  # Set the model to evaluation mode
     with torch.no_grad():  # Disable gradient calculation
         outputs = model(**inputs)
