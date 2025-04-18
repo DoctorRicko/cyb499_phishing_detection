@@ -17,11 +17,12 @@ Only NOW can you start installing things. YOU WILL DO THE REST OF THE WORK IN TH
 pip install -r requirements.txt # I believe this downloads all necessary packages/dependencies/whatever
 ```
 # Acquiring datasets
-You need to manually get the datasets and put them in your LOCAL file structure (you cannot put them on github)
+It's not best practice to upload datasets on public repositories. While our datasets are already public, lets just practice
+simulating a professional environment. You need to manually get the datasets and put them in your LOCAL file structure
 ```
 mkdir -p data/extracted/phishing data/extracted/enron
 ```
-You need to make this *exact* file path at the top of the folder (/cyb499_phishing_detection)
+You need to make this *exact* file path at the top of the folder (/cyb499_phishing_detection), 
 Then we need to download the csv files and *manually* place the zip/tar.gz files in the approriate folders
 You *may* need to download 7zip and adjust environment variables: https://www.7-zip.org/
 
@@ -46,9 +47,14 @@ IMPORTANT: Training is a heavy load on your computer and will take *hours* to co
 python src/lora_train.py --model_name roberta-base --output_dir model/lora_test
 ```
 # Evaluating the Model
-Now that you have the model, all that's left is simply to put it to the test. This doesn't take as long since
-I reduced the amount of files it needs to go over, if you change the load you could overload your CPU and crash
-the program, maybe even your computer
+Now that you have the model, all that's left is simply to put it to the test. First we need to create a test dataset,
+luckily for you, I've written script already that randomly samples our current datasets,
+
+```
+.\split_dataset.ps1
+```
+Now that that's taken care of, all that's left is to evaluate it. This doesn't take as long since I reduced the amount 
+of files it needs to go over, if you change the load you could overload your CPU and crash the program, maybe even your computer.
 
 ```
 python .\src\evaluate.py --model_path .\model\lora_test\ --test_file .\data\test.csv --results_dir .\results
