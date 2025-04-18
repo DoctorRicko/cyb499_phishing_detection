@@ -1,6 +1,7 @@
 import json
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 from sklearn.metrics import (
     classification_report,
     confusion_matrix,
@@ -54,6 +55,27 @@ def evaluate(model_path, test_file, results_dir):
         max_length=256,
         return_tensors="pt",
     ).to(model.device)
+
+     # Process in smaller batches
+    batch_size = 4  # Start small, increase if you have more RAM
+    predictions = []
+    
+    for i in tqdm(range(0, len(texts), desc="Evaluating")):
+        batch_texts = texts[i:i+batch_size]
+        inputs = tokenizer(
+            batch_texts,
+            padding="max_length",
+            truncation=True,
+            max_length=512,  # Reduced from 2042 to 512
+            return_tensors="pt",
+        ).to(model.device)
+        
+        with torch.no_grad():
+            outputs = model(**inputs)
+            batch_preds = torch.argmax(outputs.logits, dim=-1).cpu().numpy()
+            predictions.extend(batch_preds)
+    
+    y_pred = np.array(predictions)
 
     # Run predictions
     model.eval()
